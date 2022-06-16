@@ -1,8 +1,7 @@
 import puppeteer from 'puppeteer'
-
 class Ups {
 	constructor () {
-		this.url = 'https://www.ups.com/fr/fr/support/shipping-support/shipping-costs-rates/fuel-surcharges.page'
+		this.url = process.env.url
 		this.count = 2
 	}
 

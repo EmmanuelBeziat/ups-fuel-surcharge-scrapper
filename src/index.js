@@ -1,17 +1,17 @@
 import App from './App.js'
 import CORS from '@fastify/cors'
-import favicons from 'fastify-favicon'
+// import favicons from 'fastify-favicon'
 
-/* App.register(CORS, {
-	origin: (origin, cb) => {
-		if (/localhost/.test(origin) || 'https://hittheroad.co') {
-			cb(null, true)
-			true
+App.register(CORS, instance => {
+	return (req, callback) => {
+		const origin = req.headers.origin
+		// const hostname = new URL(origin).hostname
+		const corsOptions = {
+			origin: (!origin)
 		}
-
-		cb(new Error('Not allowed'))
+		callback(null, corsOptions)
 	}
-}) */
+})
 
 /* App.register(favicons, {
 	path: './public/favicons'
