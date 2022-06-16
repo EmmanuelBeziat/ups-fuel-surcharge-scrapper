@@ -1,0 +1,22 @@
+{
+  "name": "ups-fuel-surcharge-scrapper",
+  "version": "1.0.0",
+  "description": "Get UPS fuel surcharge by scraping UPS website",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "node -r dotenv/config src/index.js",
+    "prod": "nodemon -r dotenv/config  src/index.js",
+    "deploy": "pm2 start src/index.js --name 'ups-scrapper' --node-args='-r dotenv/config'"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^7.0.0",
+    "dotenv": "^16.0.1",
+    "fastify": "^3.0.3",
+    "fastify-favicon": "^4.0.0",
+    "puppeteer": "^14.4.0"
+  }
+}
