@@ -17,7 +17,7 @@ App.register(CORS, instance => {
 	path: './public/favicons'
 }) */
 
-App.listen(process.env.port || 3000, (err, address) => {
+App.listen(process.env.PORT || 3000, (err, address) => {
 	if (err) {
 		console.error(err)
 		process.exit(1)
