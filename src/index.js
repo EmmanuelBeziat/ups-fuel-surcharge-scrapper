@@ -1,6 +1,6 @@
 import App from './App.js'
 import CORS from '@fastify/cors'
-// import favicons from 'fastify-favicon'
+import favicons from 'fastify-favicon'
 
 App.register(CORS, instance => {
 	return (req, callback) => {
@@ -13,11 +13,11 @@ App.register(CORS, instance => {
 	}
 })
 
-/* App.register(favicons, {
+App.register(favicons, {
 	path: './public/favicons'
-}) */
+})
 
-App.listen(process.env.PORT || 3000, (err, address) => {
+App.listen(process.env.PORT || 3000, process.env.LOCAL, (err, address) => {
 	if (err) {
 		console.error(err)
 		process.exit(1)
