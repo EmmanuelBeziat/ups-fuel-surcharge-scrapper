@@ -2,7 +2,7 @@ import { UpsController } from '../controllers/index.js'
 
 export class Router {
 	constructor () {
-		this.apiURL = '/api/ups/'
+		this.apiURL = process.env.API || '/api/ups/'
 		this.ups = new UpsController()
 	}
 
