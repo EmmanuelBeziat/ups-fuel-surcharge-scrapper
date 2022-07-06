@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer'
 class Ups {
 	constructor () {
-		this.url = process.env.url
+		this.url = process.env.URL
 		this.count = 2
 	}
 
