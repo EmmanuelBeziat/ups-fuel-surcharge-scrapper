@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer'
+
 class Ups {
 	constructor () {
 		this.url = process.env.URL
@@ -7,13 +8,15 @@ class Ups {
 
 	async browse () {
 		const browser = await puppeteer.launch({
+			headless: 'new',
 			args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
 			ignoreDefaultArgs: ['--disable-extensions'],
 		})
 		const page = await browser.newPage()
-
 		await page.goto(this.url)
-		await page.waitForSelector('#RevenueSurchargeHistory tbody')
+		await page.waitForSelector('#RevenueSurchargeHistory tbody', {
+			timeout: 10000
+		})
 
 		const surcharge = await page.evaluate(() => {
 			const data = []
