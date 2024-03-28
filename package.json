@@ -8,7 +8,7 @@
     "start": "npm run dev",
     "dev": "node --watch -r dotenv/config src/index.js",
     "prod": "nodemon -r dotenv/config  src/index.js",
-    "deploy": "pm2 start src/index.js --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 rempad ups-scrapper --update-env"
+    "deploy": "pm2 start src/index.js --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env"
   },
   "author": "",
   "license": "ISC",
