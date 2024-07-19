@@ -14,14 +14,16 @@ App.register(CORS, instance => {
 })
 
 App.register(favicons, {
-	path: './public/favicons'
+	path: './public/favicons',
+	name: 'favicon.ico'
 })
 
-App.listen(process.env.PORT || 3000, process.env.LOCAL, (err, address) => {
-	if (err) {
-		console.error(err)
+// Server start
+App.listen({ port: process.env.PORT || 3000, host: process.env.LOCAL || '127.0.0.1' })
+	.then(address => {
+		console.log(`Server started on ${address}`)
+	})
+	.catch(error => {
+		console.log(`Error starting server: ${error}`)
 		process.exit(1)
-	}
-
-	console.log(`Server listening on ${address}`)
-})
+	})
