@@ -14,9 +14,26 @@ class Ups {
 		})
 		const page = await browser.newPage()
 		await page.goto(this.url)
-		await page.waitForSelector('#RevenueSurchargeHistory tbody', {
-			timeout: 10000
-		})
+
+		const maxRetries = 3
+		const delay = 10000
+		let retries = 0
+		let success = false
+		while (retries < maxRetries && !success) {
+			try {
+				await page.waitForSelector('#RevenueSurchargeHistory tbody', {
+					timeout: delay
+				})
+				success = true
+			}
+			catch (error) {
+				retries++
+				if (retries === maxRetries) {
+					await browser.close()
+					throw new Error(`Failed to find selector after ${maxRetries} attemps of ${delay}ms`)
+				}
+			}
+		}
 
 		const surcharge = await page.evaluate(() => {
 			const data = []
