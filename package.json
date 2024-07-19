@@ -1,6 +1,6 @@
 {
   "name": "ups-fuel-surcharge-scrapper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Get UPS fuel surcharge by scraping UPS website",
   "type": "module",
   "main": "src/index.js",
