@@ -16,7 +16,7 @@ class Ups {
 		await page.goto(this.url)
 
 		const maxRetries = 3
-		const delay = 10000
+		const delay = 20000
 		let retries = 0
 		let success = false
 		while (retries < maxRetries && !success) {
