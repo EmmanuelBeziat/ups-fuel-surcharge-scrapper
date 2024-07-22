@@ -20,7 +20,6 @@ class Ups {
 		await page.goto(this.url, { waitUntil: 'networkidle2', timeout: this.delay })
 
 		const content = await page.$eval(this.selector, table => table.innerHTML)
-
 		const data = this.parseData(content)
 
 		await browser.close()
@@ -35,7 +34,7 @@ class Ups {
 			const cells = row.querySelectorAll('td')
 			return {
 				date: cells[0].innerText,
-				standarde: cells[1].innerText.replace(/\%/g, ''),
+				standard: cells[1].innerText.replace(/\%/g, ''),
 				express: cells[2].innerText.replace(/\%/g, '')
 			}
 		})
