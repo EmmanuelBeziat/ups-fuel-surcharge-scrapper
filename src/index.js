@@ -1,8 +1,8 @@
 import App from './App.js'
-import CORS from '@fastify/cors'
+import cors from '@fastify/cors'
 import favicons from 'fastify-favicon'
 
-App.register(CORS, instance => {
+App.register(cors, instance => {
 	return (req, callback) => {
 		const origin = req.headers.origin
 		// const hostname = new URL(origin).hostname
