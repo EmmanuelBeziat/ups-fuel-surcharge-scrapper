@@ -18,6 +18,6 @@
     "fastify": "^4.28.1",
     "fastify-favicon": "^4.3.0",
     "node-html-parser": "^6.1.13",
-    "puppeteer": "^22.13.1"
+    "puppeteer": "^23.2.2"
   }
 }
