@@ -8,7 +8,8 @@
     "start": "npm run dev",
     "dev": "node --watch -r dotenv/config src/index.js",
     "prod": "nodemon -r dotenv/config  src/index.js",
-    "deploy": "pm2 start src/index.js --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env"
+    "deploy": "pm2 start src/index.js --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env",
+    "test": "vitest --run"
   },
   "author": "",
   "license": "ISC",
@@ -19,5 +20,8 @@
     "fastify-favicon": "^5.0.0",
     "node-html-parser": "^6.1.13",
     "puppeteer": "^23.7.0"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.4"
   }
 }
