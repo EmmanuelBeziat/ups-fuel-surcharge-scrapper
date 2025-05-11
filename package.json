@@ -8,7 +8,7 @@
     "start": "npm run dev",
     "dev": "node --watch -r dotenv/config src/index.ts",
     "prod": "nodemon -r dotenv/config  src/index.ts",
-    "deploy": "pm2 start src/index.ts --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env",
+    "deploy": "pm2 start --interpreter=\"node\" --interpreter-args=\"-r ts-node/register\" src/index.ts --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env",
     "test": "vitest --run",
     "prepare": "husky"
   },
@@ -36,6 +36,7 @@
     "husky": "^9.1.7",
     "inquirer": "^12.6.1",
     "lint-staged": "^16.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.32.0",
     "vitest": "^3.1.3"
