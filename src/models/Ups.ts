@@ -40,22 +40,58 @@ class Ups {
    * @returns Promise resolving to an array of FuelSurcharge objects
    */
   async browse (): Promise<FuelSurcharge[]> {
-    const browser: Browser = await puppeteer.launch({
-      browser: 'firefox',
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'],
-      ignoreDefaultArgs: ['--disable-extensions'],
-      waitForInitialPage: false
-    })
+    let browser: Browser | null = null
+    try {
+      browser = await puppeteer.launch({
+        browser: 'firefox',
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions',
+          '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        ],
+        ignoreDefaultArgs: ['--disable-extensions'],
+        waitForInitialPage: false
+      })
 
-    const [page]: Page[] = await browser.pages()
-    await page.goto(this.url, { waitUntil: 'networkidle2', timeout: this.delay })
+      const [page]: Page[] = await browser.pages()
 
-    const content: string = await page.$eval(this.selector, table => table.innerHTML)
-    const data: FuelSurcharge[] = this.parseData(content)
+      // Set viewport to ensure consistent rendering
+      await page.setViewport({ width: 1920, height: 1080 })
 
-    await browser.close()
-    return data
+      // Navigate to the page with increased timeout
+      await page.goto(this.url, {
+        waitUntil: 'networkidle2',
+        timeout: this.delay
+      })
+
+      // Wait for the selector to be present
+      await page.waitForSelector(this.selector, {
+        timeout: this.delay,
+        visible: true
+      })
+
+      const content: string = await page.$eval(this.selector, table => table.innerHTML)
+      const data: FuelSurcharge[] = this.parseData(content)
+
+      return data
+    }
+		catch (error) {
+      console.error('Error during scraping:', error)
+      throw error
+    }
+		finally {
+      if (browser) {
+        await browser.close()
+      }
+    }
   }
 
   /**
