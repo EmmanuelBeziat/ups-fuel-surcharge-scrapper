@@ -8,7 +8,7 @@
     "start": "npm run dev",
     "dev": "node --watch -r dotenv/config src/index.ts",
     "prod": "nodemon -r dotenv/config  src/index.ts",
-    "deploy": "pm2 start --interpreter=\"node\" --interpreter-args=\"-r ts-node/register\" src/index.ts --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env",
+    "deploy": "pm2 start npm --name 'ups-scrapper' -- start || pm2 reload ups-scrapper --update-env",
     "test": "vitest --run",
     "prepare": "husky"
   },
