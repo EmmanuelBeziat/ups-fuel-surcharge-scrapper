@@ -4,12 +4,13 @@ import { parse } from 'node-html-parser'
 class Ups {
 	constructor () {
 		this.url = process.env.URL
-		this.selector = '#RevenueSurchargeHistory tbody'
+		this.selector = '#link1 tbody'
 		this.delay = 10000
 	}
 
 	async browse () {
 		const browser = await puppeteer.launch({
+			broser: 'firefox',
 			headless: true,
 			args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'],
 			ignoreDefaultArgs: ['--disable-extensions'],
