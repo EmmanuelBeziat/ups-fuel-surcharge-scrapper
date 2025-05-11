@@ -1,17 +1,26 @@
 {
   "name": "ups-fuel-surcharge-scrapper",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Get UPS fuel surcharge by scraping UPS website",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
     "start": "npm run dev",
-    "dev": "node --watch -r dotenv/config src/index.js",
-    "prod": "nodemon -r dotenv/config  src/index.js",
-    "deploy": "pm2 start src/index.js --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env",
-    "test": "vitest --run"
+    "dev": "node --watch -r dotenv/config src/index.ts",
+    "prod": "nodemon -r dotenv/config  src/index.ts",
+    "deploy": "pm2 start src/index.ts --name 'ups-scrapper' --node-args='-r dotenv/config' || pm2 reload ups-scrapper --update-env",
+    "test": "vitest --run",
+    "prepare": "husky"
   },
-  "author": "",
+  "lint-staged": {
+    "src/**/*.{js,jsx,cjs,mjs,ts,tsx}": [
+      "npx eslint"
+    ]
+  },
+  "author": {
+    "name": "Emmanuel Béziat",
+    "email": "contact@emmanuelbeziat.com"
+  },
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^11.0.1",
@@ -22,6 +31,13 @@
     "puppeteer": "^24.8.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "eslint": "^9.26.0",
+    "husky": "^9.1.7",
+    "inquirer": "^12.6.1",
+    "lint-staged": "^16.0.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.0",
     "vitest": "^3.1.3"
   }
 }
