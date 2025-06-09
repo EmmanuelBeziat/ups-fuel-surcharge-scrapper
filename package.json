@@ -8,7 +8,7 @@
     "start": "npm run dev",
     "dev": "node --watch -r dotenv/config src/index.ts",
     "prod": "nodemon -r dotenv/config  src/index.ts",
-    "deploy": "pm2 start npm --name 'ups-scrapper' -- start || pm2 reload ups-scrapper --update-env",
+    "deploy": "pm2 delete ups-scrapper 2>/dev/null || true && pm2 start npm --name 'ups-scrapper' -- start",
     "test": "vitest --run",
     "prepare": "husky"
   },
@@ -38,7 +38,7 @@
     "lint-staged": "^16.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.33.1",
-    "vitest": "^3.2.1"
+    "typescript-eslint": "^8.34.0",
+    "vitest": "^3.2.3"
   }
 }
