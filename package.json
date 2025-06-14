@@ -25,14 +25,14 @@
   "dependencies": {
     "@fastify/cors": "^11.0.1",
     "dotenv": "^16.5.0",
-    "fastify": "^5.3.3",
+    "fastify": "^5.4.0",
     "fastify-favicon": "^5.0.0",
     "node-html-parser": "^7.0.1",
-    "puppeteer": "^24.10.0"
+    "puppeteer": "^24.10.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.28.0",
-    "eslint": "^9.28.0",
+    "@eslint/js": "^9.29.0",
+    "eslint": "^9.29.0",
     "husky": "^9.1.7",
     "inquirer": "^12.6.3",
     "lint-staged": "^16.1.0",
