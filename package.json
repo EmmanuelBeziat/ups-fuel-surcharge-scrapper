@@ -24,11 +24,12 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^11.2.0",
+    "@lightpanda/browser": "^1.2.0",
     "dotenv": "^17.4.2",
     "fastify": "^5.8.5",
     "fastify-favicon": "^5.0.0",
     "node-html-parser": "^7.1.0",
-    "puppeteer": "^24.42.0"
+    "puppeteer-core": "^24.42.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

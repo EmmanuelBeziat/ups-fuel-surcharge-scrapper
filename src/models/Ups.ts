@@ -1,4 +1,5 @@
-import puppeteer, { Browser, Page } from 'puppeteer'
+import { spawn, type ChildProcess } from 'node:child_process'
+import puppeteer, { Browser, Page } from 'puppeteer-core'
 import { parse, HTMLElement } from 'node-html-parser'
 
 /**
@@ -13,9 +14,14 @@ interface FuelSurcharge {
   express: string
 }
 
+interface LightpandaRuntime {
+  proc: ChildProcess
+  wsEndpoint: string
+}
+
 /**
  * Class for scraping UPS fuel surcharge data
- * Uses Puppeteer to browse the UPS website and extract surcharge information
+ * Uses Lightpanda (ephemeral process) + Puppeteer CDP connection
  */
 class Ups {
   /** URL of the UPS fuel surcharge page */
@@ -24,37 +30,93 @@ class Ups {
   private selector: string
   /** Delay in milliseconds for page loading */
   private delay: number
+  /** Lightpanda binary path */
+  private lightpandaBin: string
+  /** Lightpanda host */
+  private lightpandaHost: string
+  /** Lightpanda port */
+  private lightpandaPort: number
 
   /**
    * Creates a new Ups instance
-   * Initializes URL, selector and delay values
+   * Initializes URL, selector and runtime values
    */
   constructor () {
     this.url = process.env.URL || ''
     this.selector = 'table tbody'
-    this.delay = 10000
+    this.delay = Number(process.env.SCRAPER_TIMEOUT_MS) || 10000
+    this.lightpandaBin = process.env.LIGHTPANDA_BIN || 'lightpanda'
+    this.lightpandaHost = process.env.LIGHTPANDA_HOST || '127.0.0.1'
+    this.lightpandaPort = Number(process.env.LIGHTPANDA_PORT) || 9222
   }
 
-/**
+  /**
+   * Starts an ephemeral Lightpanda process and returns runtime info
+   */
+  private async startLightpanda (): Promise<LightpandaRuntime> {
+    const proc = spawn(this.lightpandaBin, ['serve', '--host', this.lightpandaHost, '--port', String(this.lightpandaPort)], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+
+    const wsEndpoint = `ws://${this.lightpandaHost}:${this.lightpandaPort}/devtools/browser`
+
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        cleanup()
+        resolve()
+      }, 1500)
+
+      const onExit = (code: number | null) => {
+        cleanup()
+        reject(new Error(`Lightpanda exited before startup (code: ${code})`))
+      }
+
+      const onError = (err: Error) => {
+        cleanup()
+        reject(err)
+      }
+
+      const cleanup = (): void => {
+        clearTimeout(timer)
+        proc.off('exit', onExit)
+        proc.off('error', onError)
+      }
+
+      proc.once('exit', onExit)
+      proc.once('error', onError)
+    })
+
+    return { proc, wsEndpoint }
+  }
+
+  /**
+   * Stops the Lightpanda process
+   */
+  private async stopLightpanda (proc?: ChildProcess): Promise<void> {
+    if (!proc || proc.killed) return
+
+    proc.kill('SIGTERM')
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    if (!proc.killed) {
+      proc.kill('SIGKILL')
+    }
+  }
+
+  /**
    * Browses the UPS website and extracts fuel surcharge data
    * @returns Promise resolving to an array of FuelSurcharge objects
    */
   async browse (maxRetries: number = 3): Promise<FuelSurcharge[]> {
-    let browser: Browser | null = null
     let lastError: Error | null = null
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      let runtime: LightpandaRuntime | null = null
+      let browser: Browser | null = null
+
       try {
-        browser = await puppeteer.launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-extensions'
-          ],
-          ignoreDefaultArgs: ['--disable-extensions']
-        })
+        runtime = await this.startLightpanda()
+        browser = await puppeteer.connect({ browserWSEndpoint: runtime.wsEndpoint })
 
         const page: Page = await browser.newPage()
 
@@ -73,22 +135,30 @@ class Ups {
           throw new Error(`UPS page returned invalid status: ${response?.status()}`)
         }
 
-        await page.waitForSelector('table tbody', {
+        await page.waitForSelector(this.selector, {
           timeout: this.delay,
           visible: true
         })
 
-        const content: string = await page.$eval('table tbody', table => table.innerHTML)
+        const content: string = await page.$eval(this.selector, (table: any) => table.innerHTML)
         const data: FuelSurcharge[] = this.parseData(content)
 
         await browser.close()
+        await this.stopLightpanda(runtime.proc)
+
         return data
-      } catch (error) {
+      }
+			catch (error) {
         lastError = error as Error
         console.error(`Attempt ${attempt}/${maxRetries} failed:`, error)
+
         if (browser) {
           await browser.close().catch(() => {})
         }
+        if (runtime) {
+          await this.stopLightpanda(runtime.proc)
+        }
+
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
         }
