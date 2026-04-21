@@ -80,7 +80,7 @@ class Ups {
         const content: string = await page.$eval(this.selector, (table: any) => table.innerHTML)
         const data: FuelSurcharge[] = this.parseData(content)
 
-        await browser.close()
+        await browser.disconnect()
         return data
       }
       catch (error) {
@@ -88,7 +88,7 @@ class Ups {
         console.error(`Attempt ${attempt}/${maxRetries} failed:`, error)
 
         if (browser) {
-          await browser.close().catch(() => {})
+          await browser.disconnect().catch(() => {})
         }
 
         if (attempt < maxRetries) {
