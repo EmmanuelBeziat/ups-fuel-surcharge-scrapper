@@ -61,7 +61,7 @@ class Ups {
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
-    const wsEndpoint = `ws://${this.lightpandaHost}:${this.lightpandaPort}/devtools/browser`
+    const wsEndpoint = process.env.LIGHTPANDA_WS_ENDPOINT || `ws://${this.lightpandaHost}:${this.lightpandaPort}/`
     const stdout: string[] = []
     const stderr: string[] = []
 
@@ -191,6 +191,7 @@ class Ups {
         if (browser) {
           await browser.close().catch(() => {})
         }
+
         if (runtime) {
           await this.stopLightpanda(runtime.proc)
         }
