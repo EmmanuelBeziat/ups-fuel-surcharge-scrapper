@@ -31,67 +31,71 @@ class Ups {
    */
   constructor () {
     this.url = process.env.URL || ''
-    this.selector = '#link1 tbody'
+    this.selector = 'table tbody'
     this.delay = 10000
   }
 
-  /**
+/**
    * Browses the UPS website and extracts fuel surcharge data
    * @returns Promise resolving to an array of FuelSurcharge objects
    */
-  async browse (): Promise<FuelSurcharge[]> {
+  async browse (maxRetries: number = 3): Promise<FuelSurcharge[]> {
     let browser: Browser | null = null
-    try {
-      browser = await puppeteer.launch({
-        browser: 'firefox',
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-gpu',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-extensions',
-          '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        ],
-        ignoreDefaultArgs: ['--disable-extensions'],
-        waitForInitialPage: false
-      })
+    let lastError: Error | null = null
 
-      const [page]: Page[] = await browser.pages()
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        browser = await puppeteer.launch({
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-extensions'
+          ],
+          ignoreDefaultArgs: ['--disable-extensions']
+        })
 
-      // Set viewport to ensure consistent rendering
-      await page.setViewport({ width: 1920, height: 1080 })
+        const page: Page = await browser.newPage()
 
-      // Navigate to the page with increased timeout
-      await page.goto(this.url, {
-        waitUntil: 'networkidle2',
-        timeout: this.delay
-      })
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36')
+        await page.setExtraHTTPHeaders({
+          'accept-language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7'
+        })
+        await page.setViewport({ width: 1920, height: 1080 })
 
-      // Wait for the selector to be present
-      await page.waitForSelector(this.selector, {
-        timeout: this.delay,
-        visible: true
-      })
+        const response = await page.goto(this.url, {
+          waitUntil: 'load',
+          timeout: this.delay
+        })
 
-      const content: string = await page.$eval(this.selector, table => table.innerHTML)
-      const data: FuelSurcharge[] = this.parseData(content)
+        if (!response || !response.ok()) {
+          throw new Error(`UPS page returned invalid status: ${response?.status()}`)
+        }
 
-      return data
-    }
-		catch (error) {
-      console.error('Error during scraping:', error)
-      throw error
-    }
-		finally {
-      if (browser) {
+        await page.waitForSelector('table tbody', {
+          timeout: this.delay,
+          visible: true
+        })
+
+        const content: string = await page.$eval('table tbody', table => table.innerHTML)
+        const data: FuelSurcharge[] = this.parseData(content)
+
         await browser.close()
+        return data
+      } catch (error) {
+        lastError = error as Error
+        console.error(`Attempt ${attempt}/${maxRetries} failed:`, error)
+        if (browser) {
+          await browser.close().catch(() => {})
+        }
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
+        }
       }
     }
+
+    throw lastError
   }
 
   /**
