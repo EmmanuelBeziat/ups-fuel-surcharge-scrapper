@@ -38,3 +38,7 @@ jspm_packages
 
 .env
 dist
+
+.kilo/
+.claude/
+.DS_Store
