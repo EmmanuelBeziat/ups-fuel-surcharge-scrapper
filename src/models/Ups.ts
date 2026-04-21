@@ -33,8 +33,8 @@ class Ups {
    */
   constructor () {
     this.url = process.env.URL || ''
-    this.selector = 'table tbody'
-    this.delay = Number(process.env.SCRAPER_TIMEOUT_MS) || 10000
+    this.selector = '#link1 tbody, table tbody'
+    this.delay = Number(process.env.SCRAPER_TIMEOUT_MS) || 30000
     this.lightpandaWsEndpoint = process.env.LIGHTPANDA_WS_ENDPOINT || 'ws://127.0.0.1:9222/'
   }
 
@@ -63,8 +63,11 @@ class Ups {
         })
         await page.setViewport({ width: 1920, height: 1080 })
 
+        page.setDefaultNavigationTimeout(this.delay)
+        page.setDefaultTimeout(this.delay)
+
         const response = await page.goto(this.url, {
-          waitUntil: 'load',
+          waitUntil: 'domcontentloaded',
           timeout: this.delay
         })
 
@@ -72,12 +75,25 @@ class Ups {
           throw new Error(`UPS page returned invalid status: ${response?.status()}`)
         }
 
-        await page.waitForSelector(this.selector, {
-          timeout: this.delay,
-          visible: true
+        await page.waitForFunction(
+          () => {
+            const candidates = ['#link1 tbody', 'table tbody']
+            return candidates.some((selector) => {
+              const element = document.querySelector(selector)
+              return Boolean(element && element.textContent && element.textContent.trim().length > 0)
+            })
+          },
+          { timeout: this.delay }
+        )
+
+        const content: string = await page.evaluate(() => {
+          const table = document.querySelector('#link1 tbody') || document.querySelector('table tbody')
+          return table ? table.innerHTML : ''
         })
 
-        const content: string = await page.$eval(this.selector, (table: any) => table.innerHTML)
+        if (!content) {
+          throw new Error('Fuel surcharge table was not found in page DOM')
+        }
         const data: FuelSurcharge[] = this.parseData(content)
 
         await browser.disconnect()
