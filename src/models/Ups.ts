@@ -17,6 +17,8 @@ interface FuelSurcharge {
 interface LightpandaRuntime {
   proc: ChildProcess
   wsEndpoint: string
+  stdout: string[]
+  stderr: string[]
 }
 
 /**
@@ -54,21 +56,41 @@ class Ups {
    * Starts an ephemeral Lightpanda process and returns runtime info
    */
   private async startLightpanda (): Promise<LightpandaRuntime> {
+    const startupTimeout = Number(process.env.LIGHTPANDA_STARTUP_TIMEOUT_MS) || 8000
     const proc = spawn(this.lightpandaBin, ['serve', '--host', this.lightpandaHost, '--port', String(this.lightpandaPort)], {
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
     const wsEndpoint = `ws://${this.lightpandaHost}:${this.lightpandaPort}/devtools/browser`
+    const stdout: string[] = []
+    const stderr: string[] = []
+
+    proc.stdout?.on('data', (chunk: Buffer) => {
+      const line = chunk.toString()
+      stdout.push(line)
+      if (process.env.DEBUG_LIGHTPANDA === '1') {
+        console.log(`[lightpanda:stdout] ${line.trim()}`)
+      }
+    })
+
+    proc.stderr?.on('data', (chunk: Buffer) => {
+      const line = chunk.toString()
+      stderr.push(line)
+      if (process.env.DEBUG_LIGHTPANDA === '1') {
+        console.error(`[lightpanda:stderr] ${line.trim()}`)
+      }
+    })
 
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => {
         cleanup()
         resolve()
-      }, 1500)
+      }, startupTimeout)
 
-      const onExit = (code: number | null) => {
+      const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
         cleanup()
-        reject(new Error(`Lightpanda exited before startup (code: ${code})`))
+        const details = this.formatLightpandaLogs(stdout, stderr)
+        reject(new Error(`Lightpanda exited before startup (code: ${code}, signal: ${signal}). ${details}`))
       }
 
       const onError = (err: Error) => {
@@ -86,7 +108,16 @@ class Ups {
       proc.once('error', onError)
     })
 
-    return { proc, wsEndpoint }
+    return { proc, wsEndpoint, stdout, stderr }
+  }
+
+  /**
+   * Returns compact startup logs for troubleshooting
+   */
+  private formatLightpandaLogs (stdout: string[], stderr: string[]): string {
+    const out = stdout.join('').trim().slice(-500)
+    const err = stderr.join('').trim().slice(-500)
+    return `stdout="${out || '<empty>'}" stderr="${err || '<empty>'}"`
   }
 
   /**
@@ -116,7 +147,10 @@ class Ups {
 
       try {
         runtime = await this.startLightpanda()
-        browser = await puppeteer.connect({ browserWSEndpoint: runtime.wsEndpoint })
+        browser = await puppeteer.connect({
+          browserWSEndpoint: runtime.wsEndpoint,
+          protocolTimeout: Number(process.env.LIGHTPANDA_PROTOCOL_TIMEOUT_MS) || 15000
+        })
 
         const page: Page = await browser.newPage()
 
@@ -148,9 +182,11 @@ class Ups {
 
         return data
       }
-			catch (error) {
+      catch (error) {
         lastError = error as Error
+        const logs = runtime ? this.formatLightpandaLogs(runtime.stdout, runtime.stderr) : 'no process logs captured'
         console.error(`Attempt ${attempt}/${maxRetries} failed:`, error)
+        console.error(`[lightpanda:debug] ${logs}`)
 
         if (browser) {
           await browser.close().catch(() => {})
